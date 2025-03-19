@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Page</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f8f9fa;
+    }
+    .login-box {
+      width: 100%;
+      max-width: 500px; /* Adjust this for a bigger box */
+      padding: 40px; /* Increased padding for a larger feel */
+      border: 1px solid #6ea3f8dc;
+      border-radius: 10px;
+      background-color: #fff;
+      text-align: center;
+    }
+    .login-box img {
+      margin-bottom: 30px; /* Increased margin for better spacing */
+      width: 150px; /* Bigger logo */
+    }
+    .form-label {
+      color: #d9d9d9;
+    }
+    .form-control {
+      margin-bottom: 20px; /* Increased margin between inputs */
+      padding: 15px; /* Larger input fields */
+    }
+    .forgot-password {
+      font-size: 0.9rem;
+      text-align: right;
+      display: block;
+      margin-bottom: 15px;
+    }
+    .sign-up {
+      margin-top: 30px;
+    }
+    .sign-up a {
+      color: #4c8df5dc;
+      text-decoration: none;
+    }
+    .sign-up a:hover {
+      text-decoration: underline;
+    }
+    .btn-submit {
+      background-color: #186cf5dc;
+      color: white;
+      border: 1px solid #186cf5dc;
+      padding: 15px; /* Larger button */
+      font-size: 1.1rem; /* Bigger text */
+    }
+    .btn-submit:hover {
+      background-color: #0047b3;
+      border-color: #0047b3;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-box">
+    <img src="Frame.png" alt="Logo"> <!-- Replace logo.png with your logo file -->
+    
+    <form>
+      <div class="form-group">
+        <br>
+        <input type="email" class="form-control" id="email" placeholder="Enter your email" required>
+      </div>
+
+      <div class="form-group">
+        <br>
+        <div class="input-group">
+          <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+          <div class="input-group-append">
+            <span class="input-group-text">
+              <i class="fa fa-eye" id="togglePassword" style="cursor: pointer;"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <a href="#" class="forgot-password">Forgot password?</a>
+
+      <button type="submit" class="btn btn-submit btn-block">Submit</button>
+
+      <div class="sign-up">
+        I don’t have an account? <a href="#">Sign up</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <!-- FontAwesome for eye icon -->
+  <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+
+  <script>
+    // Toggle password visibility
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+    
+    togglePassword.addEventListener('click', function () {
+      const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+      password.setAttribute('type', type);
+      this.classList.toggle('fa-eye-slash');
+    });
+  </script>
+</body>
+</html>
