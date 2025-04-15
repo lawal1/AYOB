@@ -267,7 +267,7 @@ firebase.initializeApp(firebaseConfig);
 
     function loadChats() {
         if (!currentUser) return;
-        database.ref('chats').on('value', snapshot => {
+        database.ref('users/${currentUser.uid}/chats').on('value', snapshot => {
             chatList.innerHTML = '';
             snapshot.forEach(child => {
                 const chat = child.val();
@@ -282,7 +282,7 @@ firebase.initializeApp(firebaseConfig);
 
     function loadMessages(chatId) {
         currentChatId = chatId;
-        database.ref(`messages/${chatId}`).on('value', snapshot => {
+        database.ref(`users/${currentUser.uid}/messages/${chatId}`).on('value', snapshot => {
             chatMessages.innerHTML = '';
             snapshot.forEach(child => {
                 const message = child.val();
@@ -305,11 +305,11 @@ firebase.initializeApp(firebaseConfig);
     const title = prompt('Enter a chat title:');
     if (title) {
         // Generate a new chat ID and set it as the current chat
-        const chatId = database.ref('chats').push().key;
+        const chatId = database.ref('users/${currentUser.uid}/chats').push().key;
         currentChatId = chatId;
 
         // Save the new chat in the database
-        database.ref(`chats/${chatId}`).set({ 
+        database.ref(`users/${currentUser.uid}/chats/${chatId}`).set({ 
             title, 
             createdBy: currentUser.uid 
         })
@@ -321,7 +321,7 @@ firebase.initializeApp(firebaseConfig);
 
             // Send a welcome message from the AI
             const welcomeMessage = "👋 Welcome! I'm here to assist you with any questions related to the university. Feel free to ask!";
-            const aiMessageRef = database.ref(`messages/${chatId}`).push();
+            const aiMessageRef = database.ref(`users/${currentUser.uid}/messages/${chatId}`).push();
             aiMessageRef.set({
                 text: welcomeMessage,
                 senderId: 'ai', // Marks the message as coming from the AI
@@ -350,7 +350,7 @@ firebase.initializeApp(firebaseConfig);
             alert('Please select or start a new chat.');
             return;
         }
-        const userMessageRef = database.ref(`messages/${currentChatId}`).push();
+        const userMessageRef = database.ref(`users/${currentUser.uid}/messages/${currentChatId}`).push();
         userMessageRef.set({
             text,
             senderId: currentUser.uid,
@@ -371,7 +371,7 @@ firebase.initializeApp(firebaseConfig);
         })
         .then(data => {
             if (!data.reply) throw new Error('Empty reply from API');
-            const aiMessageRef = database.ref(`messages/${currentChatId}`).push();
+            const aiMessageRef = database.ref(`users/${currentUser.uid}/messages/${currentChatId}`).push();
             return aiMessageRef.set({
                 text: data.reply,
                 senderId: 'ai',
@@ -380,7 +380,7 @@ firebase.initializeApp(firebaseConfig);
         })
         .catch(error => {
             console.error('Error:', error);
-            const errorMessageRef = database.ref(`messages/${currentChatId}`).push();
+            const errorMessageRef = database.ref(`users/${currentUser.uid}/messages/${currentChatId}`).push();
             errorMessageRef.set({
                 text: 'Failed to get response. Please try again.',
                 senderId: 'system',
