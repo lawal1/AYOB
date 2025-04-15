@@ -267,10 +267,12 @@ firebase.initializeApp(firebaseConfig);
 
     function loadChats() {
         if (!currentUser) return;
-        database.ref('users/${currentUser.uid}/chats').on('value', snapshot => {
+        database.ref(`users/${currentUser.uid}/chats`).on('value', snapshot => {
             chatList.innerHTML = '';
+            
             snapshot.forEach(child => {
                 const chat = child.val();
+                console.log(chat)
                 const chatItem = document.createElement('div');
                 chatItem.classList.add('chat-item');
                 chatItem.textContent = chat.title;
@@ -305,7 +307,7 @@ firebase.initializeApp(firebaseConfig);
     const title = prompt('Enter a chat title:');
     if (title) {
         // Generate a new chat ID and set it as the current chat
-        const chatId = database.ref('users/${currentUser.uid}/chats').push().key;
+        const chatId = database.ref(`users/${currentUser.uid}/chats`).push().key;
         currentChatId = chatId;
 
         // Save the new chat in the database
