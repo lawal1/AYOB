@@ -310,6 +310,8 @@ firebase.initializeApp(firebaseConfig);
         const chatId = database.ref(`users/${currentUser.uid}/chats`).push().key;
         currentChatId = chatId;
 
+        console.log(chatId)
+
         // Save the new chat in the database
         database.ref(`users/${currentUser.uid}/chats/${chatId}`).set({ 
             title, 
