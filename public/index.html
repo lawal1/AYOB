@@ -592,6 +592,18 @@ firebase.initializeApp(firebaseConfig);
         width: 100%;
       }
     }
+    .chat-input input {
+    flex: 1;               /* allow it to grow */
+    min-width: 0;          /* allow it to shrink */
+    width: 100%;           /* span available space */
+    max-width: 100%;       /* don’t exceed container */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
   </style>
 </head>
 <body>
