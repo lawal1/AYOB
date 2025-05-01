@@ -1,4 +1,4 @@
-
+<!-- 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -380,6 +380,531 @@ firebase.initializeApp(firebaseConfig);
         .catch(error => {
             console.error('Error:', error);
             const errorMessageRef = database.ref(`messages/${currentChatId}`).push();
+            errorMessageRef.set({
+                text: 'Failed to get response. Please try again.',
+                senderId: 'system',
+                timestamp: Date.now()
+            });
+        });
+    });
+  
+    </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Chat/title>
+    <!-- <style>
+        /* Same styling as before */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #EFFDFF;
+            color: #0061FF;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            box-sizing: border-box;
+            border-right: 1px solid #ccc;
+        }
+
+        .sidebar .logo {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .sidebar .chat-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .sidebar .chat-list .chat-item {
+            padding: 8px 12px;
+            margin: 8px 0;
+            cursor: pointer;
+            color: #0061FF;
+            border-radius: 5px;
+        }
+
+        .sidebar .chat-list .chat-item:hover {
+            background-color: #E3DBD7;
+        }
+
+        .sidebar .chat-list .chat-item.selected {
+            background-color: #0061FF;
+            color: #ffffff;
+        }
+
+        .sidebar .new-chat-button {
+            background-color: #0061FF;
+            color: #ffffff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .sidebar .new-chat-button:hover {
+            background-color: #004bbd;
+        }
+
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+        }
+
+        .chat-header {
+            background-color: #EFFDFF;
+            color: #4f96c3;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 70%;
+        }
+
+        .sender {
+            background-color: #0061FF;
+            color: #ffffff;
+            align-self: flex-end;
+        }
+
+        .recipient {
+            background-color: #E3DBD7;
+            color: #333333;
+            align-self: flex-start;
+        }
+
+        .chat-input {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box; /* Ensure padding is included in width */
+    background-color: #EFFDFF;
+    padding: 10px;
+    gap: 10px;
+}
+
+.chat-input input {
+    flex: 1; /* Allow the input to grow and fill available space */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box; /* Include padding in width */
+}
+
+        .chat-input button {
+            background-color: #0061FF;
+            color: #ffffff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .chat-input button {
+    flex: none; /* Keep button width based on its content */
+    background-color: #0061FF;
+    color: #ffffff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+    </style> -->
+    <style>
+        /* Base Layout */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #f1f1f1;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar h2 {
+            margin-top: 0;
+        }
+        
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .sidebar ul li {
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            margin-bottom: 10px;
+        }
+        
+        .user {
+            font-weight: bold;
+        }
+        
+        .input-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            margin-right: 10px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #0061FF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        /* Toggle Button (Mobile Only) */
+        .toggle-button {
+            display: none;
+            background: #0061FF;
+            color: white;
+            border: none;
+            font-size: 18px;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        
+        /* Mobile Styles */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+        
+            .sidebar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                z-index: 1000;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                width: 250px;
+            }
+        
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        
+            .main-chat {
+                flex: 1;
+                margin-left: 0;
+            }
+        
+            .toggle-button {
+                display: block;
+            }
+        }
+        </style>
+        
+</head>
+<body>
+    <div class="sidebar">
+        <button class="toggle-button" onclick="toggleSidebar()">☰ Menu</button>
+
+        <div class="logo">
+            <img src="Frame.png" alt="Logo">
+        </div>
+        <div class="chat-list" id="chat-list"></div>
+        <button class="new-chat-button" id="new-chat-button">Start New Conversation</button> <br><br>
+        <div style="text-align: center; color: #ff3700!important;" id="login-status"></div>
+        <button  id="login-button" style="border: 1px solid #0061FF; color: white; border-radius: 20px; padding-top: 12px; padding-bottom: 12px; background-color: #0061FF; display: flex; ">Login with Gmail</button>
+        <button id="logout-button" style="border: 1px solid #ff3700; color: white; border-radius: 20px; padding-top: 12px; padding-bottom: 12px; background-color: #ff3700;display: none;">Logout</button>
+    </div>
+
+    <div class="main-chat">
+        <div class="chat-header">
+            <h1>Chat</h1>
+            
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div  class="chat-input" style="display: none; 
+        width: 100%;
+        box-sizing: border-box; /* Ensure padding is included in width */
+        background-color: #EFFDFF;
+        padding: 10px;
+        gap: 10px;">
+            <input  type="text" id="chat-input" placeholder="Type your message here..." style=" display: flex;
+            width: 100%;
+            box-sizing: border-box; /* Ensure padding is included in width */
+            background-color: #EFFDFF;
+            padding: 10px;
+            gap: 10px;"/>
+            <button style="background-color: #0061FF;
+            color: #ffffff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;" id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    <script>
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    sidebar.classList.toggle('open');
+}
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3fMQiCZWFpPZJ1JrObgdygtvAC23Hfwo",
+      authDomain: "timirg-copilot.firebaseapp.com",
+      databaseURL: "https://timirg-copilot-default-rtdb.firebaseio.com",
+      projectId: "timirg-copilot",
+      storageBucket: "timirg-copilot.appspot.com",
+      messagingSenderId: "491904583147",
+      appId: "1:491904583147:web:7ad8a54b7341b1abbf05ae",
+      measurementId: "G-GNZKB9SKDE"
+        };
+
+
+
+firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    // UI Elements
+    const loginButton = document.getElementById('login-button');
+    const logoutButton = document.getElementById('logout-button');
+    const loginStatus = document.getElementById('login-status');
+    const chatList = document.getElementById('chat-list');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const sendButton = document.getElementById('send-button');
+    const newChatButton = document.getElementById('new-chat-button');
+
+    let currentUser = null;
+    let currentChatId = null;
+
+    // Optional: Explicitly set persistence (local is default)
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+    // Listen for authentication state changes
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            loginStatus.innerHTML = `Logged in as: ${user.displayName}`;
+            loginButton.style.display = 'none';
+            logoutButton.style.display = 'block';
+            loadChats();
+        } else {
+            currentUser = null;
+            loginStatus.innerHTML = 'Not logged in';
+            loginButton.style.display = 'block';
+            logoutButton.style.display = 'none';
+            chatList.innerHTML = '';
+            chatMessages.innerHTML = '';
+            document.querySelector('.chat-input').style.display = 'none';
+        }
+    });
+
+    loginButton.addEventListener('click', () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider)
+            .then(result => {
+                // The onAuthStateChanged listener will handle the UI update
+                console.log('Logged in:', result.user.displayName);
+            })
+            .catch(console.error);
+    });
+
+    logoutButton.addEventListener('click', () => {
+        auth.signOut()
+            .then(() => {
+                console.log('Logged out');
+            })
+            .catch(console.error);
+    });
+
+    function loadChats() {
+        if (!currentUser) return;
+        database.ref(`users/${currentUser.uid}/chats`).on('value', snapshot => {
+            chatList.innerHTML = '';
+            
+            snapshot.forEach(child => {
+                const chat = child.val();
+                console.log(chat)
+                const chatItem = document.createElement('div');
+                chatItem.classList.add('chat-item');
+                chatItem.textContent = chat.title;
+                chatItem.onclick = () => loadMessages(child.key);
+                chatList.appendChild(chatItem);
+            });
+        });
+    }
+
+    function loadMessages(chatId) {
+        currentChatId = chatId;
+        database.ref(`users/${currentUser.uid}/messages/${chatId}`).on('value', snapshot => {
+            chatMessages.innerHTML = '';
+            snapshot.forEach(child => {
+                const message = child.val();
+                document.querySelector('.chat-input').style.display = 'flex';
+                const messageElement = document.createElement('div');
+                messageElement.className = message.senderId === currentUser.uid ? 'message sender' : 'message recipient';
+                messageElement.textContent = message.text;
+                chatMessages.appendChild(messageElement);
+            });
+        });
+    }
+
+    newChatButton.addEventListener('click', () => { 
+
+    if (!currentUser) {
+        alert('You must be logged in to start a new conversation.');
+        return;
+    }
+
+    const title = prompt('Enter a chat title:');
+    if (title) {
+        // Generate a new chat ID and set it as the current chat
+        const chatId = database.ref(`users/${currentUser.uid}/chats`).push().key;
+        currentChatId = chatId;
+
+        console.log(currentChatId)
+
+        // Save the new chat in the database
+        database.ref(`users/${currentUser.uid}/chats/${chatId}`).set({ 
+            title, 
+            createdBy: currentUser.uid 
+        })
+        .then(() => {
+            // Immediately load the new chat and show input area
+            loadMessages(chatId);
+            document.querySelector('.chat-input').style.display = 'flex';
+            chatMessages.innerHTML = ''; // Clear previous messages
+
+            // Send a welcome message from the AI
+            const welcomeMessage = "👋 Welcome! I'm here to assist you with any questions related to the university. Feel free to ask!";
+            const aiMessageRef = database.ref(`users/${currentUser.uid}/messages/${chatId}`).push();
+            aiMessageRef.set({
+                text: welcomeMessage,
+                senderId: 'ai', // Marks the message as coming from the AI
+                timestamp: Date.now()
+            });
+        })
+        .catch(error => {
+            console.error('Error creating chat:', error);
+        });
+    } else {
+        alert('Chat title cannot be empty.');
+    }
+});
+
+    sendButton.addEventListener('click', () => {
+        if (!currentUser) {
+            alert('You must be logged in to send a message.');
+            return;
+        }
+        const text = chatInput.value.trim();
+        if (!text) {
+            alert('Message cannot be empty.');
+            return;
+        }
+        if (!currentChatId) {
+            alert('Please select or start a new chat.');
+            return;
+        }
+        const userMessageRef = database.ref(`users/${currentUser.uid}/messages/${currentChatId}`).push();
+        userMessageRef.set({
+            text,
+            senderId: currentUser.uid,
+            timestamp: Date.now()
+        })
+        .then(() => {
+            chatInput.value = ''; // Clear input after sending
+            // Send message to API endpoint
+            return fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: text })
+            });
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('API request failed');
+            return response.json();
+        })
+        .then(data => {
+            if (!data.reply) throw new Error('Empty reply from API');
+            const aiMessageRef = database.ref(`users/${currentUser.uid}/messages/${currentChatId}`).push();
+            return aiMessageRef.set({
+                text: data.reply,
+                senderId: 'ai',
+                timestamp: Date.now()
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const errorMessageRef = database.ref(`users/${currentUser.uid}/messages/${currentChatId}`).push();
             errorMessageRef.set({
                 text: 'Failed to get response. Please try again.',
                 senderId: 'system',
