@@ -1,4 +1,4 @@
-
+<!-- 
 
 <!DOCTYPE html>
 <html lang="en">
@@ -211,6 +211,400 @@
     font-size: 14px;
     box-sizing: border-box;
 }
+
+  </style>
+</head>
+<body>
+
+
+  <button class="toggle-button" onclick="toggleSidebar()">☰ Chats</button>
+
+  <div class="sidebar">
+    <div class="logo">
+      <img src="Frame.png" alt="Logo">
+    </div>
+    <div class="chat-list" id="chat-list"></div>
+    <button class="new-chat-button" id="new-chat-button">Start New Conversation</button>
+    <div id="login-status" style="text-align:center; color:#ff3700; margin-top:10px;"></div>
+    <button id="login-button">Login with Gmail</button>
+    <button id="logout-button" style="display:none;">Logout</button>
+  </div>
+
+
+  <div class="main-chat">
+    <div class="chat-header">
+      <h1>Chat</h1>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input" style="display:none;">
+      <input type="text" id="chat-input" placeholder="Type your message here...">
+      <button id="send-button">Send</button>
+    </div>
+  </div>
+
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+  <script>
+    // Sidebar toggle
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+    }
+
+    // Firebase setup
+    const firebaseConfig = {
+        apiKey: "AIzaSyA3fMQiCZWFpPZJ1JrObgdygtvAC23Hfwo",
+      authDomain: "timirg-copilot.firebaseapp.com",
+      databaseURL: "https://timirg-copilot-default-rtdb.firebaseio.com",
+      projectId: "timirg-copilot",
+      storageBucket: "timirg-copilot.appspot.com",
+      messagingSenderId: "491904583147",
+      appId: "1:491904583147:web:7ad8a54b7341b1abbf05ae",
+      measurementId: "G-GNZKB9SKDE"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    // UI refs
+    const loginButton = document.getElementById('login-button');
+    const logoutButton = document.getElementById('logout-button');
+    const loginStatus = document.getElementById('login-status');
+    const chatList = document.getElementById('chat-list');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInputEl = document.getElementById('chat-input');
+    const sendButton = document.getElementById('send-button');
+    const newChatBtn = document.getElementById('new-chat-button');
+
+    let currentUser = null;
+    let currentChatId = null;
+
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        loginStatus.textContent = `Logged in as: ${user.displayName}`;
+        loginButton.style.display = 'none';
+        logoutButton.style.display = 'block';
+        loadChats();
+      } else {
+        currentUser = null;
+        loginStatus.textContent = 'Not logged in';
+        loginButton.style.display = 'block';
+        logoutButton.style.display = 'none';
+        chatList.innerHTML = '';
+        chatMessages.innerHTML = '';
+        document.querySelector('.chat-input').style.display = 'none';
+      }
+    });
+
+    loginButton.addEventListener('click', () => {
+      auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(console.error);
+    });
+    logoutButton.addEventListener('click', () => {
+      auth.signOut().catch(console.error);
+    });
+
+    function loadChats() {
+      if (!currentUser) return;
+      database.ref(`users/${currentUser.uid}/chats`).on('value', snap => {
+        chatList.innerHTML = '';
+        snap.forEach(child => {
+          const chat = child.val();
+          const div = document.createElement('div');
+          div.className = 'chat-item';
+          div.textContent = chat.title;
+          div.onclick = () => loadMessages(child.key);
+          chatList.appendChild(div);
+        });
+      });
+    }
+
+    function loadMessages(chatId) {
+      currentChatId = chatId;
+      database.ref(`users/${currentUser.uid}/messages/${chatId}`).on('value', snap => {
+        chatMessages.innerHTML = '';
+        document.querySelector('.chat-input').style.display = 'flex';
+        snap.forEach(child => {
+          const msg = child.val();
+          const el = document.createElement('div');
+          el.className = `message ${msg.senderId === currentUser.uid ? 'sender' : 'recipient'}`;
+          el.textContent = msg.text;
+          chatMessages.appendChild(el);
+        });
+      });
+    }
+
+    newChatBtn.addEventListener('click', () => {
+      if (!currentUser) return alert('Log in first');
+      const title = prompt('Enter a chat title:');
+      if (!title) return alert('Title cannot be empty');
+      const chatId = database.ref(`users/${currentUser.uid}/chats`).push().key;
+      database.ref(`users/${currentUser.uid}/chats/${chatId}`)
+        .set({ title, createdBy: currentUser.uid })
+        .then(() => {
+          loadMessages(chatId);
+          const aiMsg = database.ref(`users/${currentUser.uid}/messages/${chatId}`).push();
+          aiMsg.set({
+            text: "👋 Welcome! I'm here to assist you with any questions.",
+            senderId: 'ai',
+            timestamp: Date.now()
+          });
+        });
+    });
+
+    sendButton.addEventListener('click', () => {
+      const text = chatInputEl.value.trim();
+      if (!currentUser) return alert('Log in first');
+      if (!text) return alert('Message cannot be empty');
+      if (!currentChatId) return alert('Select or start a chat');
+
+      const userRef = database.ref(`users/${currentUser.uid}/messages/${currentChatId}`).push();
+      userRef.set({ text, senderId: currentUser.uid, timestamp: Date.now() })
+        .then(() => {
+          chatInputEl.value = '';
+          return fetch('/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: text })
+          });
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (!data.reply) throw new Error();
+          const aiRef = database.ref(`users/${currentUser.uid}/messages/${currentChatId}`).push();
+          aiRef.set({ text: data.reply, senderId: 'ai', timestamp: Date.now() });
+        })
+        .catch(() => {
+          const errRef = database.ref(`users/${currentUser.uid}/messages/${currentChatId}`).push();
+          errRef.set({ text: 'Failed to get response. Try again.', senderId: 'system', timestamp: Date.now() });
+        });
+    });
+  </script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Chat</title>
+  <style>
+    /* ======================
+       Base Layout & Styles
+       ====================== */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #494949; /* Updated background */
+      color: #e0e0e0; /* Light text for dark backgrounds */
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background-color: #161818; /* Updated sidebar */
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      box-sizing: border-box;
+      border-right: 1px solid #333;
+    }
+    .sidebar .logo {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #e0e0e0;
+    }
+    .sidebar .chat-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .sidebar .chat-list .chat-item {
+      padding: 8px 12px;
+      margin: 8px 0;
+      cursor: pointer;
+      border-radius: 5px;
+      color: #e0e0e0;
+    }
+    .sidebar .chat-list .chat-item:hover {
+      background-color: #2a2c2c;
+    }
+    .sidebar .chat-list .chat-item.selected {
+      background-color: #0061FF;
+      color: white;
+    }
+    .sidebar .new-chat-button {
+      background-color: #0061FF; /* Button color */
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 20px;
+    }
+    .sidebar .new-chat-button:hover {
+      background-color: #004BBd;
+    }
+    #login-button, #logout-button {
+      border-radius: 20px;
+      padding: 12px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #login-button {
+      border: 1px solid #0061FF;
+      background-color: #0061FF; /* Button color */
+      color: white;
+    }
+    #logout-button {
+      border: 1px solid #ff3700;
+      background-color: #ff3700;
+      color: white;
+    }
+
+    /* Main Chat */
+    .main-chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: #1f1f1f; /* Chat area background */
+    }
+    .chat-header {
+      background-color: #1f1f1f;
+      color: #e0e0e0;
+      padding: 10px;
+      text-align: center;
+      position: relative;
+      border-bottom: 1px solid #333;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      background-color: #1f1f1f; /* Chat area background */
+    }
+    .message {
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 70%;
+    }
+    .sender {
+      background-color: #0061FF; /* Button color */
+      color: white;
+      align-self: flex-end;
+    }
+    .recipient {
+      background-color: #333;
+      color: #e0e0e0;
+      align-self: flex-start;
+    }
+    .chat-input {
+      display: flex;
+      width: 100%;
+      box-sizing: border-box;
+      background-color: #1f1f1f; /* Chat area background */
+      padding: 10px;
+      gap: 10px;
+      border-top: 1px solid #333;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 10px;
+      background-color: #333;
+      color: #e0e0e0;
+      border: 1px solid #555;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    .chat-input input::placeholder {
+      color: #999;
+    }
+    .chat-input button {
+      background-color: #0061FF; /* Button color */
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    /* Toggle Button */
+    .toggle-button {
+      display: none;
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      background: #0061FF; /* Button color */
+      color: white;
+      border: none;
+      font-size: 18px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 1100;
+    }
+
+    /* ======================
+       Mobile Responsive
+       ====================== */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        transform: translateX(-100%);
+        z-index: 1000;
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .toggle-button {
+        display: block;
+      }
+      .main-chat {
+        flex: 1;
+        margin-left: 0;
+        height: calc(100vh - 50px);
+      }
+      .chat-header {
+        padding-left: 50px;
+      }
+      .chat-input {
+        flex-direction: column;
+      }
+      .chat-input input,
+      .chat-input button {
+        width: 100%;
+      }
+    }
+    .chat-input input {
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+      padding: 10px;
+      border: 1px solid #555;
+      border-radius: 5px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
 
   </style>
 </head>
